@@ -325,13 +325,13 @@ class SparkTorchTests(unittest.TestCase):
         updated_metric_value_groups[1][1].update.assert_called_once_with(6)
 
     def test_torch_param_serialize(self):
-        serialized_backend = _torch_param_serialize(EstimatorParams.backend.name, 'dummy_value')
+        serialized_backend = _torch_param_serialize(EstimatorParams.backend.name, 'dummy_value', None, "dummy_id")
         assert serialized_backend is None
 
-        serialized_store = _torch_param_serialize(EstimatorParams.store.name, 'dummy_value')
+        serialized_store = _torch_param_serialize(EstimatorParams.store.name, 'dummy_value', None, "dummy_id")
         assert serialized_store is None
 
-        serialized_dummy_param = _torch_param_serialize('dummy_param_name', None)
+        serialized_dummy_param = _torch_param_serialize('dummy_param_name', None, None, "dummy_id")
         assert serialized_dummy_param is None
 
     def test_torch_direct_parquet_train(self):
@@ -560,3 +560,5 @@ def fn(batches_per_commit, batches_per_epoch, epochs, dir=None):
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
     state = hvd.elastic.TorchState(model, optimizer, batch=0, epoch=0, commits=0, rendezvous=0)
     return train(state, dir)
+
+SparkTorchTests().test_transform_multi_class()

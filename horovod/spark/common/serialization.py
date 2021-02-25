@@ -46,14 +46,18 @@ class HorovodParamsWriter(DefaultParamsWriter):
             json_params = param_map
         else:
             for p, param_val in params.items():
+                store = instance.getStore()
+                run_id = instance.getRunId()
                 # If param is not json serializable, convert it into serializable object
-                json_params[p.name] = param_serializer_fn(p.name, param_val)
+                json_params[p.name] = param_serializer_fn(p.name, param_val, store, run_id)
 
         # Default param values
         json_default_params = {}
         for p, param_val in instance._defaultParamMap.items():
             json_default_params[p.name] = param_serializer_fn(p.name,
-                                                              param_val)
+                                                              param_val,
+                                                              store,
+                                                              run_id)
 
         basic_metadata = {"class": cls, "timestamp": int(round(time.time() * 1000)),
                           "sparkVersion": sc.version, "uid": uid, "paramMap": json_params,
@@ -66,8 +70,13 @@ class HorovodParamsWriter(DefaultParamsWriter):
 class HorovodParamsReader(DefaultParamsReader):
     def load(self, path):
         metadata = DefaultParamsReader.loadMetadata(path, self.sc)
-        metadata['paramMap'] = self._deserialize_dict(metadata['paramMap'])
-        metadata['defaultParamMap'] = self._deserialize_dict(metadata['defaultParamMap'])
+
+        import pdb; pdb.set_trace()
+
+        store = self._deserialize_dict({}, None)
+
+        metadata['paramMap'] = self._deserialize_dict(metadata['paramMap'], store)
+        metadata['defaultParamMap'] = self._deserialize_dict(metadata['defaultParamMap'], store)
 
         py_type = DefaultParamsReader._DefaultParamsReader__get_class(metadata['class'])
         instance = py_type()

@@ -55,8 +55,8 @@ class KerasEstimatorParamsWritable(MLWritable):
 
 
 class KerasEstimatorParamsReader(HorovodParamsReader):
-    def _deserialize_dict(self, dict):
-        def _param_deserializer_fn(name, param_val, keras_utils, custom_objects):
+    def _deserialize_dict(self, dict, store):
+        def _param_deserializer_fn(name, param_val, keras_utils, custom_objects, store):
             if param_val is None:
                 return param_val
 

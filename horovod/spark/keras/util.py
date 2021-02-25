@@ -122,8 +122,8 @@ class TFKerasUtil(object):
 
     @staticmethod
     def serialize_param_value(*args, **kwargs):
-        def _serialize_param(x, y):
-            return _serialize_param_value(x, y,
+        def _serialize_param(x, y, store, run_id):
+            return _serialize_param_value(x, y, store, run_id,
                                           serialize_model_fn=TFKerasUtil.serialize_model,
                                           serialize_opt_fn=TFKerasUtil.serialize_optimizer)
 
@@ -272,8 +272,8 @@ class BareKerasUtil(object):
 
     @staticmethod
     def serialize_param_value(*args, **kwargs):
-        def _serialize_param(x, y):
-            return _serialize_param_value(x, y,
+        def _serialize_param(x, y, store, run_id):
+            return _serialize_param_value(x, y, store, run_id,
                                           serialize_model_fn=BareKerasUtil.serialize_model,
                                           serialize_opt_fn=BareKerasUtil.serialize_optimizer)
 
@@ -387,7 +387,7 @@ def _deserialize_keras_model(model_bytes, load_model_fn):
     return deserialize_keras_model(model_bytes, load_model_fn)
 
 
-def _serialize_param_value(param_name, param_val, serialize_model_fn, serialize_opt_fn):
+def _serialize_param_value(param_name, param_val, store, run_id, serialize_model_fn, serialize_opt_fn):
     if param_val is None:
         return param_val
 
@@ -396,7 +396,10 @@ def _serialize_param_value(param_name, param_val, serialize_model_fn, serialize_
         # run of the pipeline
         return None
     elif param_name == params.EstimatorParams.model.name:
-        return serialize_model_fn(param_val)
+        model_bytes = serialize_model_fn(param_val)
+        path = os.path.join(store.get_local_output_dir_fn(run_id)(), "model")
+        model_url = store.write(model_bytes, path)
+        return codec.dumps_base64(model_url)
     if param_name == params.EstimatorParams.optimizer.name:
         return serialize_opt_fn(param_val)
     else:

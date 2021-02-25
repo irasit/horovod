@@ -40,7 +40,7 @@ import torch
 import torch.utils.data
 
 
-def _torch_param_serialize(param_name, param_val):
+def _torch_param_serialize(param_name, param_val, store, run_id):
     if param_val is None:
         return None
 
@@ -50,7 +50,11 @@ def _torch_param_serialize(param_name, param_val):
         return None
     elif param_name == EstimatorParams.model.name:
         serialize = serialize_fn()
-        return serialize(param_val)
+
+        model_bytes = serialize(param_val)
+        path = os.path.join(store.get_local_output_dir_fn(run_id)(), "model")
+        model_url = store.write(model_bytes, path)
+        return codec.dumps_base64(model_url)
 
     return codec.dumps_base64(param_val)
 
@@ -68,14 +72,15 @@ class TorchEstimatorParamsWritable(MLWritable):
 
 
 class TorchEstimatorParamsReader(HorovodParamsReader):
-    def _deserialize_dict(self, dict_values):
+    def _deserialize_dict(self, dict_values, store):
         deserialized_dict = dict()
         for key, val in dict_values.items():
             if val is None:
                 deserialized_dict[key] = None
             elif key == EstimatorParams.model.name:
                 deserialize = deserialize_fn()
-                deserialized_dict[key] = deserialize(val)
+                model_bytes = store.read(val)
+                deserialized_dict[key] = deserialize(model_bytes)
             else:
                 deserialized_dict[key] = codec.loads_base64(val)
         return deserialized_dict

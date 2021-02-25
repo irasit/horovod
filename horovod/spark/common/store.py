@@ -113,6 +113,10 @@ class Store(object):
         """Returns a function that synchronises given path recursively into run path for `run_id`."""
         raise NotImplementedError()
 
+    def write(self, bytes, path):
+        """Save bytes to a given file path. If path is not given, create new file and return the file path."""
+        raise NotImplementedError()
+
     def to_remote(self, run_id, dataset_idx):
         """Returns a view of the store that can execute in a remote environment without Horoovd deps."""
         attrs = self._remote_attrs(run_id, dataset_idx)
@@ -263,6 +267,11 @@ class FilesystemStore(Store):
 
     def get_filesystem(self):
         raise NotImplementedError()
+
+    def write(self, bytes, path):
+        with self.get_filesystem().open(self.get_localized_path(path), 'wb') as f:
+            f.write(bytes)
+        return path
 
     @classmethod
     def matches(cls, path):
